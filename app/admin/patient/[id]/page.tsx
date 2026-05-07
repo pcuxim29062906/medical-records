@@ -406,9 +406,6 @@ export default function PatientDetailsPage({ params }: PageProps) {
                                         ))
                                     ) : (
                                         <Box sx={{ py: 6, textAlign: 'center' }}>
-                                            <Typography variant="h6" color="text.secondary">
-                                                Sin consultas registradas
-                                            </Typography>
                                             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                                                 Inicia una consulta para comenzar el historial clínico.
                                             </Typography>
