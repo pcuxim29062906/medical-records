@@ -1,0 +1,24 @@
+
+Por si no has generado el cliente:
+# npx prisma generate    
+
+Crear una migración
+# npx prisma migrate dev --name init_clinical_tables
+
+# npx prisma db seed
+
+admin@clinica.com
+Admin12345
+
+
+################ crear .env
+y agregar la url de postgresql
+
+Desarrollo
+DATABASE_URL="postgresql://postgres:root@localhost:5432/medical?schema=public"
+
+produccion
+DATABASE_URL="postgresql://postgres.agmxdgqmxldxgmrijcnk:VGDggo0qwY9aIL2B@aws-1-us-east-1.pooler.supabase.com:5432/postgres"
+
+
+"prisma generate && next build"
