@@ -50,9 +50,11 @@ export default function AppointmentsCalendar() {
         const finalDoctorId = user?.role === 'DOCTOR' ? user.id : (selectedDoctorId === 'all' ? undefined : selectedDoctorId);
 
         // 4. Cargar citas
-        const appts = await getAppointments(finalDoctorId);
+        const appts = await getAppointments({
+            doctorId: finalDoctorId
+        });
 
-        const formatted = appts.map(appt => ({
+        const formatted = appts.items.map(appt => ({
             id: appt.id,
             title: `${appt.patient?.fullName || 'S/N'} (Dr. ${appt.doctor?.fullName || 'N/A'})`,
             start: appt.startDateTime,

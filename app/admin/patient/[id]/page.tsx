@@ -16,6 +16,7 @@ import {
     Stack,
     Alert,
     Skeleton,
+    Toolbar,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
@@ -31,8 +32,17 @@ import PersonIcon from '@mui/icons-material/Person';
 import { getPatientById } from '@/app/actions/patients/patients';
 import Link from 'next/link';
 import { use, useEffect, useState } from 'react';
-import { Event } from '@mui/icons-material';
+import { Event, Padding } from '@mui/icons-material';
 import { FormatDateWhitOutTimeZone } from '@/helpers/helperdate';
+// Import para drawer
+import {
+    Drawer,
+    IconButton,
+} from '@mui/material';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import CloseIcon from '@mui/icons-material/Close';
+import MonitorWeightIcon from '@mui/icons-material/MonitorWeight';
+import HeightIcon from '@mui/icons-material/Height';
 
 interface PageProps {
     params: Promise<{ id: string }>;
@@ -44,6 +54,7 @@ export default function PatientDetailsPage({ params }: PageProps) {
 
     const [patient, setPatient] = useState<any>();
     const [loading, setLoading] = useState(true);
+    const [growthDrawerOpen, setGrowthDrawerOpen] = useState(false);
 
     useEffect(() => {
         getPatientById(id)
@@ -99,6 +110,7 @@ export default function PatientDetailsPage({ params }: PageProps) {
     }
 
     const consultations = patient.consultations || [];
+    const growthHistory = patient.growthHistory || [];
 
     const pendingAppointments = (patient.appointments || [])
         .filter((appointment: any) =>
@@ -119,23 +131,26 @@ export default function PatientDetailsPage({ params }: PageProps) {
             <Box sx={{ mx: 'auto' }}>
                 <Stack
                     direction={{ xs: 'column', md: 'row' }}
-                    //justifyContent="space-between"
-                    //alignItems={{ xs: 'stretch', md: 'center' }}
+                    sx={{ mb: 3, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: "space-between" }}
                     spacing={2}
-                    sx={{ mb: 3 }}
                 >
-                    <Button
-                        startIcon={<ArrowBackIcon />}
-                        component={Link}
-                        href="/admin/patient/index"
-                        color="inherit"
-                        sx={{ alignSelf: { xs: 'flex-start', md: 'center' } }}
-                    >
-                        Volver a la lista
-                    </Button>
+                    <Box>
+                        <Button
+                            startIcon={<ArrowBackIcon />}
+                            component={Link}
+                            href="/admin/patient/index"
+                            color="inherit"
+                        >
+                            Volver a la lista
+                        </Button>
+                    </Box>
 
-                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                        <Button variant="outlined" startIcon={<EditIcon />}>
+                    <Stack
+                        direction={{ xs: 'column', md: 'row' }}
+                        spacing={2}
+                        sx={{ mb: 3, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: "space-between" }}
+                    >
+                        <Button variant="outlined" startIcon={<EditIcon />} size="small" sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start', md: 'center' } }} >
                             Editar Perfil
                         </Button>
 
@@ -145,6 +160,7 @@ export default function PatientDetailsPage({ params }: PageProps) {
                             startIcon={<MedicalServicesIcon />}
                             component={Link}
                             href={`/admin/consultation/patient/${patient.id}/create`}
+                            size="small"
                         >
                             Iniciar Consulta
                         </Button>
@@ -155,8 +171,18 @@ export default function PatientDetailsPage({ params }: PageProps) {
                             component={Link}
                             href={`/admin/appointmen/create?patientId=${patient.id}`}
                             startIcon={<Event />}
+                            size="small"
                         >
                             Nueva Cita
+                        </Button>
+
+                        <Button
+                            variant="outlined"
+                            startIcon={<TimelineIcon />}
+                            size="small"
+                            onClick={() => setGrowthDrawerOpen(true)}
+                        >
+                            Histórico Peso/Talla
                         </Button>
                     </Stack>
                 </Stack>
@@ -173,8 +199,7 @@ export default function PatientDetailsPage({ params }: PageProps) {
                 >
                     <Stack
                         direction={{ xs: 'column', md: 'row' }}
-                        //justifyContent="space-between"
-                        //alignItems={{ xs: 'stretch', md: 'center' }}
+                        sx={{ alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: "space-between" }}
                         spacing={2}
                     >
                         <Box>
@@ -211,7 +236,7 @@ export default function PatientDetailsPage({ params }: PageProps) {
                                     <InfoRow
                                         icon={<CakeIcon color="action" />}
                                         label="Fecha de nacimiento"
-                                        value={ FormatDateWhitOutTimeZone(patient.birthDate)}
+                                        value={FormatDateWhitOutTimeZone(patient.birthDate)}
                                     />
 
                                     <InfoRow
@@ -266,7 +291,7 @@ export default function PatientDetailsPage({ params }: PageProps) {
                                 <Stack
                                     direction={{ xs: 'column', sm: 'row' }}
                                     spacing={2}
-                                    sx={{ mb: 2 }}
+                                    sx={{ mb: 2, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: "space-between" }}
                                 >
                                     <Typography
                                         variant="h6"
@@ -280,7 +305,8 @@ export default function PatientDetailsPage({ params }: PageProps) {
                                         variant="contained"
                                         component={Link}
                                         href={`/admin/appointmen/create?patientId=${patient.id}`}
-                                        startIcon={<Event/>}
+                                        startIcon={<Event />}
+                                        size="small"
                                     >
                                         Agendar Cita
                                     </Button>
@@ -308,12 +334,13 @@ export default function PatientDetailsPage({ params }: PageProps) {
                                                                 hour: '2-digit',
                                                                 minute: '2-digit',
                                                             })}
+                                                            {" | Doctor: " + appointment.doctor?.fullName}
                                                         </Typography>
                                                     }
                                                     secondary={appointment.reason || 'Sin motivo registrado'}
                                                 />
 
-                                                <Stack direction="row" spacing={1} sx={{alignItems:"center"}} >
+                                                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }} >
                                                     <Chip
                                                         size="small"
                                                         label={appointment.status === 'CONFIRMED' ? 'Confirmada' : 'Pendiente'}
@@ -347,10 +374,8 @@ export default function PatientDetailsPage({ params }: PageProps) {
                             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                                 <Stack
                                     direction={{ xs: 'column', sm: 'row' }}
-                                    //justifyContent="space-between"
-                                    //alignItems={{ xs: 'stretch', sm: 'center' }}
+                                    sx={{ mb: 2, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: "space-between" }}
                                     spacing={2}
-                                    sx={{ mb: 2 }}
                                 >
                                     <Typography
                                         variant="h6"
@@ -365,6 +390,7 @@ export default function PatientDetailsPage({ params }: PageProps) {
                                         startIcon={<EventAvailableIcon />}
                                         component={Link}
                                         href={`/admin/consultation/patient/${patient.id}/create`}
+                                        size="small"
                                     >
                                         Nueva Consulta
                                     </Button>
@@ -387,7 +413,7 @@ export default function PatientDetailsPage({ params }: PageProps) {
                                                 <ListItemText
                                                     primary={
                                                         <Typography sx={{ fontWeight: 700 }}>
-                                                            Consulta médica - {new Date(consult.date).toLocaleDateString()}
+                                                            Consulta médica | Fecha: {new Date(consult.date).toLocaleDateString()} | Dr: {consult.doctor?.fullName}
                                                         </Typography>
                                                     }
                                                     secondary={`Diagnóstico: ${consult.diagnosis || 'Pendiente'}`}
@@ -417,7 +443,90 @@ export default function PatientDetailsPage({ params }: PageProps) {
                     </Grid>
                 </Grid>
             </Box>
-        </Box>
+
+            <Drawer
+                anchor="right"
+                open={growthDrawerOpen}
+                onClose={() => setGrowthDrawerOpen(false)}
+                slotProps={{
+                    paper: {
+                        sx: {
+                            width: { xs: '100%', sm: 420 },
+                            p: 3,
+                        },
+                    }
+                }}
+            >
+                <Toolbar variant="dense" />
+                <Stack spacing={3}>
+                    <Stack
+                        direction="row"
+                        sx={{
+                            alignItems: "center",
+                            justifyContent: "space-between"
+                        }}
+                    >
+                        <Box>
+                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                Histórico Peso/Talla
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Registros ordenados del más reciente al más antiguo
+                            </Typography>
+                        </Box>
+
+                        <IconButton onClick={() => setGrowthDrawerOpen(false)}>
+                            <CloseIcon />
+                        </IconButton>
+                    </Stack>
+
+                    <Divider />
+
+                    {growthHistory.length > 0 ? (
+                        <Stack spacing={2}>
+                            {growthHistory.map((item: any) => (
+                                <Paper
+                                    key={item.id}
+                                    variant="outlined"
+                                    sx={{
+                                        p: 2,
+                                        borderRadius: 2,
+                                    }}
+                                >
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                                        {FormatDateWhitOutTimeZone(item.date)}
+                                    </Typography>
+
+                                    <Stack direction="row" spacing={2}>
+                                        <Chip
+                                            icon={<MonitorWeightIcon />}
+                                            label={item.weight ? `${item.weight} kg` : 'Peso no registrado'}
+                                            color={item.weight ? 'primary' : 'default'}
+                                            variant="outlined"
+                                        />
+
+                                        <Chip
+                                            icon={<HeightIcon />}
+                                            label={item.height ? `${item.height} cm` : 'Talla no registrada'}
+                                            color={item.height ? 'success' : 'default'}
+                                            variant="outlined"
+                                        />
+                                    </Stack>
+                                </Paper>
+                            ))}
+                        </Stack>
+                    ) : (
+                        <Box sx={{ py: 6, textAlign: 'center' }}>
+                            <TimelineIcon color="disabled" sx={{ fontSize: 48, mb: 1 }} />
+                            <Typography variant="body2" color="text.secondary">
+                                No hay registros de peso y talla para este paciente.
+                            </Typography>
+                        </Box>
+                    )}
+                </Stack>
+            </Drawer>
+
+        </Box >
     );
 }
 

@@ -13,6 +13,9 @@ import ScienceIcon from '@mui/icons-material/Science';
 import MedicalInformationIcon from '@mui/icons-material/MedicalInformation';
 import { ArrowBack } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
+import PersonIcon from '@mui/icons-material/Person';
+import PrintIcon from '@mui/icons-material/Print';
+import { printConsultation } from '@/components/consultation/print/PrintConsultation';
 
 export default function ConsultationDetail({ consultation }: { consultation: any }) {
 
@@ -26,7 +29,34 @@ export default function ConsultationDetail({ consultation }: { consultation: any
         }
     };
 
+    const getInterrogation = () => {
+        try {
+            const parsed = JSON.parse(consultation.interrogation || '{}');
+
+            if (
+                typeof parsed === 'object' &&
+                parsed !== null &&
+                (
+                    'chiefComplaint' in parsed ||
+                    'currentIllness' in parsed ||
+                    'symptoms' in parsed ||
+                    'evolution' in parsed ||
+                    'notes' in parsed ||
+                    'studyResults' in parsed
+                )
+            ) {
+                return parsed;
+            }
+
+            return null;
+        } catch {
+            return null;
+        }
+    };
+
     const prescription = getPrescription();
+    const interrogation = getInterrogation();
+    const studyResults = interrogation?.studyResults || [];
 
     const studyOrders = consultation.studyOrders
         ? consultation.studyOrders
@@ -43,18 +73,49 @@ export default function ConsultationDetail({ consultation }: { consultation: any
         { label: 'Glucosa', value: consultation.glucose ? `${consultation.glucose} mg/dL` : '--' },
     ];
 
+    // Datos para imprimir
+    const doctor = consultation.doctor || consultation.appointment?.doctor;
+    const doctorProfile = doctor?.doctorProfile;
+
+    const handlePrintPrescription = () => {
+        printConsultation({
+            consultation,
+            prescription,
+            interrogation,
+            studyResults,
+            studyOrders,
+            doctor,
+            doctorProfile,
+            patient: consultation.patient,
+        });
+    };
+
+
     return (
         <Box sx={{ width: '100%' }}>
             <Grid container spacing={3}>
                 <Grid size={{ xs: 12 }}>
-                    <Button
-                        startIcon={<ArrowBack />}
-                        onClick={() => router.back()}
-                        color="inherit"
-                        sx={{ alignSelf: { xs: 'flex-start', md: 'center' }, mb: 2 }}
-                    >
-                        Volver al paciente
-                    </Button>
+
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
+                        <Button
+                            startIcon={<ArrowBack />}
+                            onClick={() => router.back()}
+                            color="inherit"
+                        >
+                            Volver al paciente
+                        </Button>
+
+                        <Button
+                            startIcon={<PrintIcon />}
+                            onClick={handlePrintPrescription}
+                            variant="contained"
+                            color="success"
+                            size="small"
+                        >
+                            Imprimir receta
+                        </Button>
+                    </Stack>
+
                     <Paper
                         sx={{
                             p: { xs: 2, sm: 3 },
@@ -95,6 +156,88 @@ export default function ConsultationDetail({ consultation }: { consultation: any
                     </Paper>
                 </Grid>
 
+                <Grid size={{ xs: 12 }}>
+                    <Paper
+                        sx={{
+                            p: { xs: 2, sm: 3 },
+                            borderRadius: 2,
+                            borderLeft: '6px solid',
+                            borderColor: 'success.main',
+                        }}
+                    >
+                        <Typography
+                            variant="h6"
+                            sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}
+                        >
+                            <PersonIcon color="success" />
+                            Médico Responsable
+                        </Typography>
+
+                        {doctor ? (
+                            <Grid container spacing={2}>
+                                <Grid size={{ xs: 12, md: 4 }}>
+                                    <InfoBlock label="Nombre" value={doctor.fullName} />
+                                </Grid>
+
+                                <Grid size={{ xs: 12, md: 4 }}>
+                                    <InfoBlock label="Correo" value={doctor.email} />
+                                </Grid>
+
+                                <Grid size={{ xs: 12, md: 4 }}>
+                                    <InfoBlock label="Rol" value={doctor.role} />
+                                </Grid>
+
+                                <Grid size={{ xs: 12, md: 4 }}>
+                                    <InfoBlock
+                                        label="Cédula profesional"
+                                        value={doctorProfile?.professionalLicense || 'No registrada'}
+                                    />
+                                </Grid>
+
+                                <Grid size={{ xs: 12, md: 4 }}>
+                                    <InfoBlock
+                                        label="Especialidad"
+                                        value={doctorProfile?.specialty || 'No registrada'}
+                                    />
+                                </Grid>
+
+                                <Grid size={{ xs: 12, md: 4 }}>
+                                    <InfoBlock
+                                        label="Subespecialidad"
+                                        value={doctorProfile?.subspecialty || 'No registrada'}
+                                    />
+                                </Grid>
+
+                                <Grid size={{ xs: 12, md: 4 }}>
+                                    <InfoBlock
+                                        label="Universidad"
+                                        value={doctorProfile?.university || 'No registrada'}
+                                    />
+                                </Grid>
+
+                                <Grid size={{ xs: 12, md: 4 }}>
+                                    <InfoBlock
+                                        label="Teléfono profesional"
+                                        value={doctorProfile?.phone || 'No registrado'}
+                                    />
+                                </Grid>
+
+                                <Grid size={{ xs: 12, md: 4 }}>
+                                    <InfoBlock
+                                        label="Consultorio"
+                                        value={doctorProfile?.office || 'No registrado'}
+                                    />
+                                </Grid>
+                            </Grid>
+                        ) : (
+                            <Typography variant="body2" color="text.secondary">
+                                No se registró médico responsable para esta consulta.
+                            </Typography>
+                        )}
+                    </Paper>
+                </Grid>
+
+
                 <Grid size={{ xs: 12, lg: 7 }}>
                     <Stack spacing={3}>
                         <Grid container spacing={3}>
@@ -102,16 +245,43 @@ export default function ConsultationDetail({ consultation }: { consultation: any
                                 <Paper sx={{ p: { xs: 2, sm: 3 }, height: '100%' }}>
                                     <Typography
                                         variant="subtitle1"
-                                        sx={{ fontWeight: 700, mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}
+                                        sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
                                     >
                                         <AssignmentIcon color="action" />
                                         Interrogatorio
                                     </Typography>
-                                    <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
-                                        {consultation.interrogation || 'No se registró interrogatorio.'}
-                                    </Typography>
+
+                                    {interrogation ? (
+                                        <Stack spacing={2}>
+                                            <InfoBlock
+                                                label="Motivo de consulta"
+                                                value={interrogation.chiefComplaint}
+                                            />
+                                            <InfoBlock
+                                                label="Padecimiento actual"
+                                                value={interrogation.currentIllness}
+                                            />
+                                            <InfoBlock
+                                                label="Síntomas referidos"
+                                                value={interrogation.symptoms}
+                                            />
+                                            <InfoBlock
+                                                label="Evolución"
+                                                value={interrogation.evolution}
+                                            />
+                                            <InfoBlock
+                                                label="Notas adicionales"
+                                                value={interrogation.notes}
+                                            />
+                                        </Stack>
+                                    ) : (
+                                        <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
+                                            {consultation.interrogation || 'No se registró interrogatorio.'}
+                                        </Typography>
+                                    )}
                                 </Paper>
                             </Grid>
+
 
                             <Grid size={{ xs: 12, md: 6 }}>
                                 <Paper sx={{ p: { xs: 2, sm: 3 }, height: '100%' }}>
@@ -167,10 +337,10 @@ export default function ConsultationDetail({ consultation }: { consultation: any
                                     <Table size="small">
                                         <TableHead sx={{ bgcolor: 'grey.50' }}>
                                             <TableRow>
-                                                <TableCell><strong>Medicamento</strong></TableCell>
-                                                <TableCell><strong>Dosis</strong></TableCell>
-                                                <TableCell><strong>Frecuencia</strong></TableCell>
-                                                <TableCell><strong>Duración</strong></TableCell>
+                                                <TableCell> <strong>Medicamento</strong></TableCell>
+                                                <TableCell> <strong>Dosis</strong></TableCell>
+                                                <TableCell> <strong>Frecuencia</strong></TableCell>
+                                                <TableCell> <strong>Duración</strong></TableCell>
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
@@ -191,6 +361,42 @@ export default function ConsultationDetail({ consultation }: { consultation: any
                                 </Typography>
                             )}
                         </Paper>
+
+                        {interrogation && studyResults.length > 0 && (
+                            <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+                                <Typography
+                                    variant="subtitle1"
+                                    sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+                                >
+                                    <ScienceIcon color="primary" />
+                                    Resultados de Estudios
+                                </Typography>
+
+                                <Stack spacing={2}>
+                                    {studyResults.map((item: any, index: number) => (
+                                        <Paper key={index} variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                                            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                                                {item.studyName || 'Estudio sin nombre'}
+                                            </Typography>
+
+                                            <Typography variant="body2" sx={{ mt: 1, whiteSpace: 'pre-line' }}>
+                                                {item.result || 'Sin resultado registrado.'}
+                                            </Typography>
+
+                                            {item.observations && (
+                                                <Typography
+                                                    variant="caption"
+                                                    color="text.secondary"
+                                                    sx={{ display: 'block', mt: 1, whiteSpace: 'pre-line' }}
+                                                >
+                                                    Observaciones: {item.observations}
+                                                </Typography>
+                                            )}
+                                        </Paper>
+                                    ))}
+                                </Stack>
+                            </Paper>
+                        )}
 
                         <Paper
                             sx={{
@@ -219,9 +425,33 @@ export default function ConsultationDetail({ consultation }: { consultation: any
                                 </Typography>
                             )}
                         </Paper>
+
                     </Stack>
                 </Grid>
             </Grid>
         </Box>
     );
 }
+
+function InfoBlock({
+    label,
+    value,
+}: {
+    label: string;
+    value?: string;
+}) {
+    if (!value) return null;
+
+    return (
+        <Box>
+            <Typography variant="caption" color="text.secondary">
+                {label}
+            </Typography>
+            <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
+                {value}
+            </Typography>
+        </Box>
+    );
+}
+
+

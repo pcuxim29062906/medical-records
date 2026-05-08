@@ -31,10 +31,10 @@ export default function CreateAppointmentPage() {
 
     useEffect(() => {
         getPatients().then((data) => {
-            setPatients(data);
+            setPatients(data.items);
 
             if (patientId) {
-                const selectedPatient = data.find((item: any) => item.id === patientId);
+                const selectedPatient = data.items.find((item: any) => item.id === patientId);
                 if (selectedPatient) {
                     setPatient(selectedPatient);
                 }
@@ -162,7 +162,7 @@ export default function CreateAppointmentPage() {
                                 label="Inicio"
                                 name="startDateTime"
                                 type="datetime-local"
-                            //InputLabelProps={{ shrink: true }}
+                                slotProps={{ inputLabel: { shrink: true } }}
                             />
                         </Grid>
 
@@ -173,7 +173,7 @@ export default function CreateAppointmentPage() {
                                 label="Fin"
                                 name="endDateTime"
                                 type="datetime-local"
-                            //InputLabelProps={{ shrink: true }}
+                                slotProps={{ inputLabel: { shrink: true } }}
                             />
                         </Grid>
 

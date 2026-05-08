@@ -1,5 +1,5 @@
 import { MenuItem } from "./menu-item";
-import { Biotech, Event, PersonalInjury } from '@mui/icons-material';
+import { Biotech, Event, PeopleAlt, PersonalInjury } from '@mui/icons-material';
 
 export const ArrayMenu: MenuItem[] = [
     {
@@ -21,6 +21,13 @@ export const ArrayMenu: MenuItem[] = [
         icon:<Biotech />,
         path:"/admin/studies/index",
         title: "studies",
+        permission: "",
+    },
+    {
+        label: "Usuarios",
+        icon:<PeopleAlt />,
+        path:"/admin/users/index",
+        title: "users",
         permission: "",
     }
 ]

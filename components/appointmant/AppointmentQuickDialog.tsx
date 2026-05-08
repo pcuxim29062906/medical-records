@@ -15,11 +15,16 @@ export default function AppointmentQuickDialog({ open, onClose, selectionInfo, o
     const [reason, setReason] = useState('');
     const [loading, setLoading] = useState(false);
 
+    const loadPatients = async () => {
+        const resp = await getPatients();
+        setPatients(resp.items);
+    }
+
     // Sincronizar el médico seleccionado con el filtro del calendario al abrir
     useEffect(() => {
         if (open) {
-            getPatients().then(setPatients);
-            
+
+            loadPatients()
             // Si id_doctor es un objeto médico completo, lo usamos. 
             // Si es solo un ID, buscamos el objeto en la lista 'doctors'
             const defaultDoc = doctors.find((d: any) => d.id === id_doctor) || null;

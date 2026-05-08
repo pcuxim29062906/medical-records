@@ -54,7 +54,7 @@ export default function StudiesPage() {
                 <Stack
                     direction={{ xs: 'column', md: 'row' }}
                     spacing={2}
-                    sx={{ mb: 3 }}
+                    sx={{ mb: 3, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: "space-between" }}
                 >
                     <Box>
                         <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>
@@ -70,6 +70,7 @@ export default function StudiesPage() {
                         startIcon={<AddIcon />}
                         onClick={() => handleOpenDialog()}
                         sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start', md: 'center' } }}
+                        size="small"
                     >
                         Nuevo Estudio
                     </Button>

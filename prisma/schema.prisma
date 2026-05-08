@@ -26,6 +26,8 @@ model User {
   updatedAt     DateTime       @updatedAt
   consultations Consultation[]
   appointments  Appointment[]
+
+  doctorProfile DoctorProfile?
 }
 
 model Patient {
@@ -123,4 +125,22 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model DoctorProfile {
+  id                 String   @id @default(cuid())
+
+  professionalLicense String   @unique // Cédula profesional
+  specialty           String?
+  subspecialty        String?
+  university          String?
+  phone               String?
+  office              String?
+  signatureUrl        String?
+
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }

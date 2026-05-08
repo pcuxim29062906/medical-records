@@ -65,10 +65,8 @@ export default function Create() {
             >
                 <Stack
                     direction={{ xs: 'column', sm: 'row' }}
-                    //justifyContent="space-between"
-                    //alignItems={{ xs: 'stretch', sm: 'center' }}
                     spacing={2}
-                    sx={{ mb: 3 }}
+                    sx={{ mb: 3, justifyContent: "space-between", alignItems: { xs: 'stretch', sm: 'center' } }}
                 >
                     <Box>
                         <Typography variant="h5" color="primary" sx={{ fontWeight: 700 }}>
@@ -128,7 +126,7 @@ export default function Create() {
                                             name="birthDate"
                                             type="date"
                                             required
-                                        //InputLabelProps={{ shrink: true }}
+                                            slotProps={{ inputLabel: { shrink: true } }}
                                         />
                                     </Grid>
 

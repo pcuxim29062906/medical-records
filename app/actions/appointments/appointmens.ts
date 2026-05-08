@@ -11,21 +11,58 @@ type CreateAppointmentInput = {
     doctorId: string
 };
 
-export async function getAppointments(doctorId?: string) {
-    return prisma.appointment.findMany({
-        include: {
-            patient: true,
-            consultation: true,
-            doctor: true
-        },
-        where: {
-            // Si doctorId existe, filtra por él; si no, trae todos
-            ...(doctorId && { doctorId: doctorId })
-        },
-        orderBy: {
-            startDateTime: 'asc',
-        },
-    });
+type GetAppointmentsInput = {
+    page?: number;
+    pageSize?: number;
+    doctorId?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+};
+
+export async function getAppointments(filters: GetAppointmentsInput = {}) {
+    const page = filters.page ?? 0;
+    const pageSize = filters.pageSize ?? 10;
+
+    const where: any = {
+        ...(filters.doctorId && { doctorId: filters.doctorId }),
+        ...(filters.status && filters.status !== 'ALL' && { status: filters.status }),
+    };
+
+    if (filters.startDate || filters.endDate) {
+        where.startDateTime = {
+            ...(filters.startDate && {
+                gte: new Date(`${filters.startDate}T00:00:00`),
+            }),
+            ...(filters.endDate && {
+                lte: new Date(`${filters.endDate}T23:59:59`),
+            }),
+        };
+    }
+
+    const [items, total] = await Promise.all([
+        prisma.appointment.findMany({
+            where,
+            include: {
+                patient: true,
+                consultation: true,
+                doctor: true,
+            },
+            orderBy: {
+                startDateTime: 'asc',
+            },
+            skip: page * pageSize,
+            take: pageSize,
+        }),
+        prisma.appointment.count({ where }),
+    ]);
+
+    return {
+        items,
+        total,
+        page,
+        pageSize,
+    };
 }
 
 export async function getAppointmentById(id: string) {
@@ -34,7 +71,11 @@ export async function getAppointmentById(id: string) {
         include: {
             patient: true,
             consultation: true,
-            doctor: true,
+            doctor: {
+                include: {
+                    doctorProfile: true
+                }
+            },
         },
     });
 }

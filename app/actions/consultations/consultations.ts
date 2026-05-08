@@ -188,16 +188,14 @@ export async function getConsultationById(id: string) {
             where: { id },
             include: {
                 // Traemos los datos básicos del paciente para el encabezado de la vista
-                patient: {
-                    select: {
-                        fullName: true,
-                        documentId: true,
-                        birthDate: true,
-                        gender: true
-                    }
-                },
+                patient: true,
                 // Si la consulta vino de una cita agendada
-                appointment: true
+                appointment: true,
+                doctor: {
+                    include:{
+                        doctorProfile: true
+                    }
+                }
             }
         });
 

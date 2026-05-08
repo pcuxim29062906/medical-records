@@ -2,7 +2,6 @@
 import { createTheme } from '@mui/material/styles';
 import { Roboto } from 'next/font/google';
 
-// Cargamos la fuente Roboto para asegurar consistencia
 const roboto = Roboto({
     weight: ['300', '400', '500', '700'],
     subsets: ['latin'],
@@ -10,75 +9,116 @@ const roboto = Roboto({
 });
 
 const theme = createTheme({
+    spacing: 4,
     palette: {
         mode: 'light',
         primary: {
-            main: '#2C5F9E', // Un azul médico profesional, no tan oscuro
-            light: '#5B8AD9',
-            dark: '#1A3E6D',
-            contrastText: '#ffffff',
+            main: '#2563EB',
+            dark: '#1E40AF',
+            light: '#DBEAFE',
         },
         secondary: {
-            main: '#00A896', // Verde azulado clínico (evoca higiene y salud)
-            light: '#4FBFA8',
-            dark: '#007A6C',
+            main: '#0D9488',
         },
         error: {
-            main: '#D32F2F', // Para alertas críticas en el expediente
+            main: '#E11D48',
         },
         warning: {
-            main: '#F57C00', // Alergias o advertencias médicas
-        },
-        info: {
-            main: '#0288D1',
-        },
-        success: {
-            main: '#2E7D32',
+            main: '#F59E0B',
         },
         background: {
-            default: '#F4F7F9', // Gris azulado muy tenue para el fondo general
-            paper: '#ffffff',   // Blanco puro para las tarjetas de expediente
-        },
-        text: {
-            primary: '#1A2027', // Casi negro para legibilidad máxima
-            secondary: '#5F6D7E',
+            default: '#F1F5F9',
+            paper: '#FFFFFF',
         },
     },
     typography: {
         fontFamily: roboto.style.fontFamily,
-        h1: { fontSize: '2.5rem', fontWeight: 600, color: '#1A3E6D' },
-        h2: { fontSize: '2rem', fontWeight: 600, color: '#1A3E6D' },
-        h5: { fontWeight: 500 },
-        body1: { fontSize: '1rem', lineHeight: 1.6 },
-        button: { textTransform: 'none', fontWeight: 600 }, // Botones sin mayúsculas forzadas
-    },
-    shape: {
-        borderRadius: 8, // Bordes ligeramente redondeados para una UI amigable
+        fontSize: 13,
+        h6: { fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', fontSize: '0.85rem' },
     },
     components: {
-        // Personalización de componentes específicos
+        MuiCssBaseline: {
+            styleOverrides: {
+                body: {
+                    scrollbarColor: "#cbd5e1 transparent",
+                    "&::-webkit-scrollbar, & *::-webkit-scrollbar": { width: 8, height: 8 },
+                    "&::-webkit-scrollbar-thumb, & *::-webkit-scrollbar-thumb": {
+                        borderRadius: 8,
+                        backgroundColor: "#cbd5e1",
+                        minHeight: 24,
+                        border: "2px solid transparent",
+                        backgroundClip: "content-box",
+                    },
+                    "&::-webkit-scrollbar-thumb:focus, & *::-webkit-scrollbar-thumb:focus": { backgroundColor: "#94a3b8" },
+                },
+            },
+        },
+        // --- INPUTS: OUTLINED PROFESIONAL ---
+        MuiTextField: {
+            defaultProps: {
+                size: 'small',
+                variant: 'outlined', // Cambiado a Outlined
+                slotProps: { htmlInput: { step: 'any' } }
+            },
+            styleOverrides: {
+                root: {
+                    '& .MuiOutlinedInput-root': {
+                        //backgroundColor: '#FFFFFF',
+                        borderRadius: 8,
+                        transition: 'all 0.2s',
+                        '& fieldset': {
+                            //borderColor: '#E2E8F0',
+                        },
+                        '&:hover fieldset': {
+                            borderColor: '#2563EB',
+                        },
+                        // Solución al problema del Focus y el Label
+                        //'&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        //    borderColor: '#2563EB',
+                        //    borderWidth: '2px',
+                        //    boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)',
+                        //},
+                    },
+                    // Asegura que el label no se encime con la sombra
+                    '& .MuiInputLabel-outlined.MuiInputLabel-shrink': {
+                        //backgroundColor: '#FFFFFF',
+                        padding: '0 4px',
+                        marginLeft: '-2px',
+                    },
+                },
+            },
+        },
+        // --- BOTONES: FIX HOVER OUTLINED ---
         MuiButton: {
             styleOverrides: {
                 root: {
+                    textTransform: 'none',
+                    fontWeight: 600,
                     borderRadius: 8,
-                    boxShadow: 'none',
-                    //'&:hover': {
-                    //    boxShadow: '0px 2px 4px rgba(0,0,0,0.1)',
-                    //},
                 },
+                outlined: {
+                    '&:hover': {
+                        backgroundColor: 'rgba(37, 99, 235, 0.04)',
+                        color: '#1E40AF',
+                        borderColor: '#1E40AF',
+                    },
+                },
+            },
+        },
+        MuiChip: {
+            styleOverrides: {
+                root: { borderRadius: 6, fontWeight: 500 },
+                colorSecondary: { backgroundColor: '#CCFBF1', color: '#115E59' },
+                colorError: { backgroundColor: '#FFE4E6', color: '#9F1239' },
             },
         },
         MuiPaper: {
+            defaultProps: { elevation: 0 },
             styleOverrides: {
                 root: {
-                    boxShadow: '0px 2px 10px rgba(0, 0, 0, 0.05)', // Sombra suave para las "fichas" médicas
+                    border: '1px solid #E2E8F0',
+                    borderRadius: 12,
                 },
-            },
-        },
-        MuiTextField: {
-            defaultProps: {
-                variant: 'outlined',
-                size: 'small', // Más compacto para formularios densos
             },
         },
     },

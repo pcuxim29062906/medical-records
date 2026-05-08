@@ -5,7 +5,9 @@ import {
     Box,
     Button,
     Chip,
+    CircularProgress,
     IconButton,
+    InputLabel,
     MenuItem,
     Paper,
     Stack,
@@ -14,20 +16,24 @@ import {
     TableCell,
     TableContainer,
     TableHead,
+    TablePagination,
     TableRow,
     TextField,
     Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import { CalendarMonth } from '@mui/icons-material';
 import Link from 'next/link';
 import {
     getAppointments,
     updateAppointmentStatus,
 } from '@/app/actions/appointments/appointmens';
-import { CalendarMonth } from '@mui/icons-material';
-import { getCurrentUser } from '@/app/actions/auth/auth'; // Asegúrate de que la ruta sea correcta
-import { load } from 'next/dist/compiled/@edge-runtime/primitives/load';
+import { getCurrentUser } from '@/app/actions/auth/auth';
+import {
+    getDoctors
+} from '@/app/actions/auth/user';
 
 const statusLabels: Record<string, string> = {
     PENDING: 'Pendiente',
@@ -45,48 +51,87 @@ const statusColors: Record<string, any> = {
 
 export default function AppointmentsPage() {
     const [appointments, setAppointments] = useState<any[]>([]);
+    const [doctors, setDoctors] = useState<any[]>([]);
     const [user, setUser] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    const [page, setPage] = useState(0);
+    const [pageSize, setPageSize] = useState(10);
+    const [total, setTotal] = useState(0);
+
+    const [status, setStatus] = useState('ALL');
+    const [doctorId, setDoctorId] = useState('ALL');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
 
     const loadData = useCallback(async () => {
-        // 1. Obtener el usuario actual
+        setLoading(true);
+
         const currentUser = await getCurrentUser();
         setUser(currentUser);
 
-        // 2. Cargar citas filtradas si es DOCTOR
-        const doctorIdFilter = currentUser?.role === 'DOCTOR' ? currentUser.id : undefined;
-        const data = await getAppointments(doctorIdFilter);
-        setAppointments(data);
-    }, []);
+        const effectiveDoctorId =
+            currentUser?.role === 'DOCTOR'
+                ? currentUser.id
+                : doctorId !== 'ALL'
+                    ? doctorId
+                    : undefined;
+
+        const [appointmentsResult, doctorsResult] = await Promise.all([
+            getAppointments({
+                page,
+                pageSize,
+                doctorId: effectiveDoctorId,
+                status,
+                startDate: startDate || undefined,
+                endDate: endDate || undefined,
+            }),
+            currentUser?.role === 'DOCTOR' ? Promise.resolve([]) : getDoctors(),
+        ]);
+
+        setAppointments(appointmentsResult.items);
+        setTotal(appointmentsResult.total);
+        setDoctors(doctorsResult);
+        setLoading(false);
+    }, [page, pageSize, status, doctorId, startDate, endDate]);
 
     useEffect(() => {
         loadData();
     }, [loadData]);
 
-    //const loadAppointments = () => {
-    //    getAppointments().then(setAppointments);
-    //};
+    const handleStatusChange = async (id: string, newStatus: string) => {
+        await updateAppointmentStatus(id, newStatus);
+        loadData();
+    };
 
-    //useEffect(() => {
-    //    loadAppointments();
-    //}, []);
+    const handleStatusFilter = (value: string) => {
+        setStatus(value);
+        setPage(0);
+    };
 
-    const handleStatusChange = async (id: string, status: string) => {
-        await updateAppointmentStatus(id, status);
-        //loadAppointments();
-        loadData()
+    const handleDoctorFilter = (value: string) => {
+        setDoctorId(value);
+        setPage(0);
+    };
+
+    const handleStartDateFilter = (value: string) => {
+        setStartDate(value);
+        setPage(0);
+    };
+
+    const handleEndDateFilter = (value: string) => {
+        setEndDate(value);
+        setPage(0);
     };
 
     return (
-        <Box >
+        <Box>
             <Paper sx={{ p: { xs: 2, sm: 3 }, mx: 'auto', borderRadius: 3 }}>
                 <Stack
                     direction={{ xs: 'column', md: 'row' }}
-                    //justifyContent="space-between"
-                    //alignItems={{ xs: 'stretch', md: 'center' }}
                     spacing={2}
-                    sx={{ mb: 3 }}
+                    sx={{ mb: 3, justifyContent: "space-between", alignItems: { xs: 'stretch', md: 'center' } }}
                 >
-
                     <Box>
                         <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>
                             {user?.role === 'DOCTOR' ? 'Mis Citas Médicas' : 'Citas Médicas Globales'}
@@ -98,30 +143,98 @@ export default function AppointmentsPage() {
                         </Typography>
                     </Box>
 
-                    <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        component={Link}
-                        href="/admin/appointmen/create"
-                        sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start', md: 'center' } }}
-                    >
-                        Nueva Cita
-                    </Button>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            component={Link}
+                            href="/admin/appointmen/create"
+                            size="small"
+                        >
+                            Nueva Cita
+                        </Button>
 
-                    <Button
-                        variant="contained"
-                        color="success"
-                        startIcon={<CalendarMonth />}
-                        component={Link}
-                        href="/admin/appointmen/calendar"
-                        sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start', md: 'center' } }}
-                    >
-                        Calendario
-                    </Button>
+                        <Button
+                            variant="contained"
+                            color="success"
+                            startIcon={<CalendarMonth />}
+                            component={Link}
+                            href="/admin/appointmen/calendar"
+                            size="small"
+                        >
+                            Calendario
+                        </Button>
+                    </Stack>
                 </Stack>
 
+                <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+                    <Stack
+                        direction={{ xs: 'column', md: 'row' }}
+                        spacing={2}
+                        sx={{ alignItems: { xs: 'stretch', md: 'center' } }}
+                    >
+                        <Stack direction="row" spacing={1}>
+                            <FilterAltIcon color="action" />
+                            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                                Filtros
+                            </Typography>
+                        </Stack>
+
+                        <TextField
+                            select
+                            size="small"
+                            label="Estado"
+                            value={status}
+                            onChange={(event) => handleStatusFilter(event.target.value)}
+                            sx={{ minWidth: 180 }}
+                        >
+                            <MenuItem value="ALL">Todos</MenuItem>
+                            <MenuItem value="PENDING">Pendiente</MenuItem>
+                            <MenuItem value="CONFIRMED">Confirmada</MenuItem>
+                            <MenuItem value="COMPLETED">Completada</MenuItem>
+                            <MenuItem value="CANCELLED">Cancelada</MenuItem>
+                        </TextField>
+
+                        {user?.role !== 'DOCTOR' && (
+                            <TextField
+                                select
+                                size="small"
+                                label="Médico"
+                                value={doctorId}
+                                onChange={(event) => handleDoctorFilter(event.target.value)}
+                                sx={{ minWidth: 240 }}
+                            >
+                                <MenuItem value="ALL">Todos los médicos</MenuItem>
+                                {doctors.map((doctor) => (
+                                    <MenuItem key={doctor.id} value={doctor.id}>
+                                        {doctor.fullName}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        )}
+
+                        <TextField
+                            size="small"
+                            label="Desde"
+                            type="date"
+                            value={startDate}
+                            onChange={(event) => handleStartDateFilter(event.target.value)}
+                            slotProps={{ inputLabel: { shrink: true } }}
+                        />
+
+                        <TextField
+                            size="small"
+                            label="Hasta"
+                            type="date"
+                            value={endDate}
+                            onChange={(event) => handleEndDateFilter(event.target.value)}
+                            slotProps={{ inputLabel: { shrink: true } }}
+                        />
+                    </Stack>
+                </Paper>
+
                 <TableContainer>
-                    <Table size="small" >
+                    <Table size="small">
                         <TableHead sx={{ bgcolor: 'grey.100' }}>
                             <TableRow>
                                 <TableCell><strong>Paciente</strong></TableCell>
@@ -129,12 +242,21 @@ export default function AppointmentsPage() {
                                 <TableCell><strong>Horario</strong></TableCell>
                                 <TableCell><strong>Motivo</strong></TableCell>
                                 <TableCell><strong>Estado</strong></TableCell>
+                                <TableCell><strong>Doctor</strong></TableCell>
                                 <TableCell align="right"><strong>Acciones</strong></TableCell>
                             </TableRow>
                         </TableHead>
 
                         <TableBody>
-                            {appointments.map((appointment) => (
+                            {loading && (
+                                <TableRow>
+                                    <TableCell colSpan={7} align="center" sx={{ py: 5 }}>
+                                        <CircularProgress size={28} />
+                                    </TableCell>
+                                </TableRow>
+                            )}
+
+                            {!loading && appointments.map((appointment) => (
                                 <TableRow key={appointment.id} hover>
                                     <TableCell>
                                         <Typography sx={{ fontWeight: 700 }}>
@@ -161,10 +283,12 @@ export default function AppointmentsPage() {
                                         })}
                                     </TableCell>
 
-                                    <TableCell>{appointment.reason || 'Sin motivo registrado'}</TableCell>
+                                    <TableCell>
+                                        {appointment.reason || 'Sin motivo registrado'}
+                                    </TableCell>
 
                                     <TableCell>
-                                        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }} >
+                                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                                             <Chip
                                                 size="small"
                                                 label={statusLabels[appointment.status] || appointment.status}
@@ -185,6 +309,10 @@ export default function AppointmentsPage() {
                                         </Stack>
                                     </TableCell>
 
+                                    <TableCell>
+                                        {appointment.doctor?.fullName || 'Sin médico asignado'}
+                                    </TableCell>
+
                                     <TableCell align="right">
                                         <IconButton
                                             color="success"
@@ -198,16 +326,33 @@ export default function AppointmentsPage() {
                                 </TableRow>
                             ))}
 
-                            {appointments.length === 0 && (
+                            {!loading && appointments.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={6} align="center" sx={{ py: 5, color: 'text.secondary' }}>
-                                        No hay citas registradas.
+                                    <TableCell colSpan={7} align="center" sx={{ py: 5, color: 'text.secondary' }}>
+                                        No hay citas con los filtros seleccionados.
                                     </TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
                     </Table>
                 </TableContainer>
+
+                <TablePagination
+                    component="div"
+                    count={total}
+                    page={page}
+                    onPageChange={(_, newPage) => setPage(newPage)}
+                    rowsPerPage={pageSize}
+                    onRowsPerPageChange={(event) => {
+                        setPageSize(Number(event.target.value));
+                        setPage(0);
+                    }}
+                    rowsPerPageOptions={[10, 25, 50, 100]}
+                    labelRowsPerPage="Filas por página"
+                    labelDisplayedRows={({ from, to, count }) =>
+                        `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
+                    }
+                />
             </Paper>
         </Box>
     );
