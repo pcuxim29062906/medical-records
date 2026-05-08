@@ -21,4 +21,4 @@ produccion
 DATABASE_URL="postgresql://postgres.agmxdgqmxldxgmrijcnk:VGDggo0qwY9aIL2B@aws-1-us-east-1.pooler.supabase.com:5432/postgres"
 
 
-"prisma generate && next build"
+prisma generate && next build
